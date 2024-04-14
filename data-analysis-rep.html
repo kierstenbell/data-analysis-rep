@@ -582,7 +582,7 @@ head(d)</code></pre>
 <pre class="r"><code># There is date (01-01-2010 - 31-10-2014), time (00:00:00-midnight - 23:00:00-11 PM), and word frequency. 
 # To generate the figure, we will need to average each hour across all the days and generate 99% confidence intervals
 
-# Get average words per hour and generate 99% confidence intervals (alpha = 0.01)
+# Get average words per hour (AvgFrequency) and generate 99% confidence intervals (alpha = 0.01)
 alpha = 0.01
 
 d.Avg &lt;- summarize(.data = d, 
@@ -652,6 +652,22 @@ those assumptions were correct.</p>
 <p>Based on this data, the UK population does not Tweet very much
 between 2 AM - 9 AM. Peak tweeting, as defined characterized by use of
 20,000 most frequent words, occurs between 9 - 11 PM.</p>
+</div>
+<div id="figure-analysis-figure-2" class="section level4">
+<h4>Figure Analysis: Figure 2</h4>
+<p>For Dzogang et al. <strong>Figure 2</strong>, they are showing that
+their methods on a group of example words (e.g., “sunrise” or “bus”) are
+over-expressed and under-expressed at the expected times. In this case,
+“sunrise” and “bus” are overexpressed at 8 AM with some slight
+overexpression in the afternoon. To demonstrate this, they use heatmaps
+that show the relative expression of a word in different months in each
+row and its relative expression during the 24-hours in each column. In
+other words, the y-axis is months and the x-axis is 24 hours. The
+authors now choose to start their x-axis at 0 (i.e., midnight), unlike
+Figure 1, for unknown reasons. The heatmaps are smoothed using cubic
+interpolation with secren interpolated points between each sampled
+value. Contours indicate sunrise and sunset in local time in London,
+United Kingdom.</p>
 </div>
 </div>
 </div>

@@ -114,3 +114,11 @@ knitr::include_graphics(c(plot_file, AuthorsFig1_url))
 Figure 1 was able to be successfully replicated. The authors did not report any physical numbers, so it is unclear whether this is an *exact* match; however, it is graphically very similar.  The data was easy to access (unlike Hughey & Butts 2016 paper!); however, the authors did not provide a lot of detail about how they conducted this particular analysis. I made some assumptions, but it appears as though those assumptions were correct. 
 
 Based on this data, the UK population does not Tweet very much between 2 AM - 9 AM. Peak tweeting, as defined characterized by use of 20,000 most frequent words, occurs between 9 - 11 PM.  
+
+#### Figure Analysis: Figure 2
+For Dzogang et al.  **Figure 2**, they are showing that their methods on a group of example words (e.g., "sunrise" or "bus") are over-expressed and under-expressed at the expected times. In this case, "sunrise" and "bus" are overexpressed at 8 AM with some slight overexpression in the afternoon.  To demonstrate this, they use heatmaps that show the relative expression of a word in different months in each row and its relative expression during the 24-hours in each column. In other words, the y-axis is months and the x-axis is 24 hours. The authors now choose to start their x-axis at 0 (i.e., midnight), unlike Figure 1, for unknown reasons. The heatmaps are smoothed using cubic interpolation with secren interpolated points between each sampled value. Contours indicate sunrise and sunset in local time in London, United Kingdom. 
+
+```{r, Figure 2}
+
+
+```
