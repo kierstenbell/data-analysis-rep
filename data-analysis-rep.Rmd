@@ -1,0 +1,116 @@
+---
+title: "data-analysis-rep"
+output: html_document
+date: "2024-04-13"
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Differential Phasing between Circadian Clocks in the Brain and Peripheral Organs in Humans
+## Jacob J. Hughey and Atul J. Butte 2016
+### Background 
+All organisms have synchronized themselves with the natural light-dark cycles of the earth, created by the rising and falling of the sun. They are able to achieve this through their circadian clock, an approximately 24-hour molecular oscillator, which regulates physiological rhythms such as sleep/wake, hunger, metabolism, as well as mood.  
+
+While there is evidence to suggest that positive moods are under circadian control,  results have been inconsistent for negative moods. 
+
+*The goal of this study is to assess time-of-day differences in  positive and negative moods by extracting indicators of mood from Twitter data to overcome the sampling frequency, sampling size, and recall bias of questionnaire-based studies.*
+
+### Data Set Collection
+The authors collected Twitter data from the 54 largest towns and cities in the United Kingdom from January 1, 2010 - October 31, 2014. Contents were collected every 10 minutes, each time retrieving the 100 most recent tweets and then removing any duplicates from the previous iterations. This resulted in 800 million tweets and 33,576 time points. 
+
+### Data Analysis 
+Individual tweets were aggregated by hour, so to have 24 data points per day in each city. Authors removed any standardized greeting messages in specific seasons as follows: tweets containing the word happy, merry, good, lovely, nice, great, or wonderful followed by christmas, halloween, valentine, easter, new year, mother day, father day, and their variants.
+
+Authors standardise the time series of each word individually so that each day receives zero mean and unit standard deviation. This procedure incorporates their observation, directly rescaling the time series of a word in terms of its intraday z-scores. 
+
+Authors first compute the Fourier decompoisition of the 33,576 time point series of averages across the words in a given list, each standardised in the 4 years, and extract the largest frequences response that corresponds with a sine wave of period under a year. The significance of the percentage of variance explained by the sine oscillation is then tested in a Monte Carlo setting using 100,000 perumutations of the original series. 
+
+#### Figure Analysis: Figure 1
+For Dzogang et al.  **Figure 1**, they look at the variation of word volume within the 24-hour cycle, with a 99% confidence interval. In order to achieve this, author's averaged the hourly word volume. I then assume they calculated their 99% confidence intervals from student t-test. They have the y-axis representing that average volume per hour in the top 20,000 most frequent words across the 4 years. Although not labeled, the x-axis represents hours, starting at 6 AM in the morning. 
+
+```{r, Fig 1}
+# Start by loading in libraries
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(skimr)
+
+# Grab data
+f <- "https://raw.githubusercontent.com/kierstenbell/data-analysis-rep/main/data/vol.csv"
+d <- read.csv(f, sep = " ")
+colnames(d) <- c("date", "time", "wordfreq") #creating column names to make data easier to work with
+
+# Let's take a look out our data
+head(d)
+skim(d)
+
+# There is date (01-01-2010 - 31-10-2014), time (00:00:00-midnight - 23:00:00-11 PM), and word frequency. 
+# To generate the figure, we will need to average each hour across all the days and generate 99% confidence intervals
+
+# Get average words per hour and generate 99% confidence intervals (alpha = 0.01)
+alpha = 0.01
+
+d.Avg <- summarize(.data = d, 
+                      AvgFrequency = mean(wordfreq),
+                      lower_ci = mean(wordfreq) + qnorm(1 - (alpha/2))* sqrt(var(wordfreq)/length(wordfreq)),
+                      upper_ci = mean(wordfreq) - qnorm(1 - (alpha/2))* sqrt(var(wordfreq)/length(wordfreq)),
+                      .by = time)
+
+# Author's plot starts at 6 (AM), current data will have the plot starting at midnight.
+# Mutate the data so that it can start at a similar time frame
+# There's probably a better way to do this but I'm creating the variable "x" so that 6 AM will be first on the chart, followed by 7 AM will be next, until 5 AM is the last point on the graph. There is a library {lubridate} that'll shift time, but it would not work for me.
+d.Avg <- d.Avg %>%
+ mutate(x = case_when(time =="00:00:00" ~ "19",
+                      time =="01:00:00" ~ "20",
+                      time =="02:00:00" ~ "21",
+                      time =="03:00:00" ~ "22",
+                      time =="04:00:00" ~ "23",
+                      time =="05:00:00" ~ "24",
+                      time =="06:00:00" ~ "01",
+                      time =="07:00:00" ~ "02",
+                      time =="08:00:00" ~ "03",
+                      time =="09:00:00" ~ "04",
+                      time =="10:00:00" ~ "05",
+                      time =="11:00:00" ~ "06",
+                      time =="12:00:00" ~ "07",
+                      time =="13:00:00" ~ "08",
+                      time =="14:00:00" ~ "09",
+                      time =="15:00:00" ~ "10",
+                      time =="16:00:00" ~ "11",
+                      time =="17:00:00" ~ "12",
+                      time =="18:00:00" ~ "13",
+                      time =="19:00:00" ~ "14",
+                      time =="20:00:00" ~ "15",
+                      time =="21:00:00" ~ "16",
+                      time =="22:00:00" ~ "17",
+                      time =="23:00:00" ~ "18"))
+
+                         
+# Let's generate the plot
+fig.1 <- ggplot(d.Avg, aes(x = x, y = AvgFrequency, group = 1)) + # group = 1 needed for geom_line()
+      geom_point() + # Add points
+      geom_line() + # Connect the points, **need group = 1 in aes 
+      geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.4, fill = "blue") +  # Add shaded area for confidence interval; lower_ci and upper_ci calculated above
+      scale_x_discrete(labels = c("6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "0", "1", "2", "3", "4", "5")) + # Manually change the x-axis labels to the correct times
+      scale_y_continuous(limits = c(0.5, 3e+05)) +  # Adjust y-axis limits
+      labs(x = "Hour", y = "Average Word Frequency") +  # Label the axes
+      ggtitle("Figure 1 Replicate")  # Add a title
+
+# Compare generated plot with original figure
+# Grab Fig 1 Url from Github
+AuthorsFig1_url <- "https://github.com/kierstenbell/data-analysis-rep/blob/main/Figures/Figure%201.jpg?raw=true"  
+
+# Output plot to a temporary files in order to use knitr
+plot_file <- tempfile(fileext = ".png")
+ggsave(plot_file, plot = fig.1, width = 5, height = 4, dpi = 300)
+
+# Compare my figure (top) to author's figures (bottom)
+knitr::include_graphics(c(plot_file, AuthorsFig1_url))
+```
+
+Figure 1 was able to be successfully replicated. The authors did not report any physical numbers, so it is unclear whether this is an *exact* match; however, it is graphically very similar.  The data was easy to access (unlike Hughey & Butts 2016 paper!); however, the authors did not provide a lot of detail about how they conducted this particular analysis. I made some assumptions, but it appears as though those assumptions were correct. 
+
+Based on this data, the UK population does not Tweet very much between 2 AM - 9 AM. Peak tweeting, as defined characterized by use of 20,000 most frequent words, occurs between 9 - 11 PM.  
