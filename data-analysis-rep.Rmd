@@ -50,7 +50,7 @@ skim(d)
 # There is date (01-01-2010 - 31-10-2014), time (00:00:00-midnight - 23:00:00-11 PM), and word frequency. 
 # To generate the figure, we will need to average each hour across all the days and generate 99% confidence intervals
 
-# Get average words per hour and generate 99% confidence intervals (alpha = 0.01)
+# Get average words per hour (AvgFrequency) and generate 99% confidence intervals (alpha = 0.01)
 alpha = 0.01
 
 d.Avg <- summarize(.data = d, 
