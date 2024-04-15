@@ -778,7 +778,7 @@ head(d_sunset)</code></pre>
 ## 6 01-01-2010 10:00:00        1</code></pre>
 <pre class="r"><code># Preprocess the data
 # as.POSIXct converts character class to the POSIXlt class which allows manipulation of date/time
-# This will allow us to easily extract month data
+# This will allow us to easily extract hour, month, and year data
 d_sunset$date_time &lt;- as.POSIXct(paste(d_sunset$date, d_sunset$time), format = &quot;%d-%m-%Y %H:%M:%OS&quot;)
 d_sunset$hour_of_day &lt;- as.numeric(format(d_sunset$date_time, &quot;%H&quot;))
 d_sunset$month &lt;- as.numeric(format(d_sunset$date_time, &quot;%m&quot;))

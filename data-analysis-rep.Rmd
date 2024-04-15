@@ -147,7 +147,7 @@ head(d_sunset)
 
 # Preprocess the data
 # as.POSIXct converts character class to the POSIXlt class which allows manipulation of date/time
-# This will allow us to easily extract month data
+# This will allow us to easily extract hour, month, and year data
 d_sunset$date_time <- as.POSIXct(paste(d_sunset$date, d_sunset$time), format = "%d-%m-%Y %H:%M:%OS")
 d_sunset$hour_of_day <- as.numeric(format(d_sunset$date_time, "%H"))
 d_sunset$month <- as.numeric(format(d_sunset$date_time, "%m"))
