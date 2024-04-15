@@ -24,13 +24,19 @@ The authors collected Twitter data from the 54 largest towns and cities in the U
 ### Data Analysis 
 Individual tweets were aggregated by hour, so to have 24 data points per day in each city. Authors removed any standardized greeting messages in specific seasons as follows: tweets containing the word happy, merry, good, lovely, nice, great, or wonderful followed by christmas, halloween, valentine, easter, new year, mother day, father day, and their variants.
 
-Authors standardise the time series of each word individually so that each day receives zero mean and unit standard deviation. This procedure incorporates their observation, directly rescaling the time series of a word in terms of its intraday z-scores. 
+Authors standardize the time series of each word individually so that each day receives zero mean and unit standard deviation. This procedure incorporates their observation, directly rescaling the time series of a word in terms of its intraday z-scores. 
 
-Authors first compute the Fourier decompoisition of the 33,576 time point series of averages across the words in a given list, each standardised in the 4 years, and extract the largest frequences response that corresponds with a sine wave of period under a year. The significance of the percentage of variance explained by the sine oscillation is then tested in a Monte Carlo setting using 100,000 perumutations of the original series. 
+Authors first compute the Fourier decomposition of the 33,576 time point series of averages across the words in a given list, each standardized in the 4 years, and extract the largest frequency response that corresponds with a sine wave of period under a year. The significance of the percentage of variance explained by the sine oscillation is then tested in a Monte Carlo setting using 100,000 perumutations of the original series. 
+
+The data that **I will duplicate** look at variation of word volume, both as a whole and for an individual word. Figures 1 and 2 are much less complicated than Figures 3-11. In short, Figure 1 looks at the hourly tweeting rates over the course of the month, averaged over 4 years. Author's construct a 99% confidence interval to look at the variation of word volume. Figure 2 looks at the hourly tweeting rates for the word "sunset" over the course of each month, averaged over 4 years. This is visualized through a heatmap. 
+
+### Results/Conclusions
+I will not be personally walking through the Figures that show mood as authors (1) do not provide enough information for their analysis despite the 9,000 data files and (2) analysis are rather complicated with Fourier decomposition and variance explained by sine oscillations. However, this paper is interesting and is one of the first paper to demonstrate circadian rhythms in both positive and negative moods at the population level. First, the authors show that social media (Twitter) can be a proxy for assessing mood  by demonstrating that behaviors that are known to follow a circadian rhythm (e.g., eating) are reflected in tweets with specific time-of-day peaks and troughs. That is, their analysis detected strong periodicity in daily activities, including meals, sleep times, or work patterns. More interestingly, the author's found that mood follows a circadian rhythm at the population-level. Based on specific tweeted words corresponding to "happiness", "fatigue", "anger", etc., the authors found mood typically starts positively in the morning and deteriorates throughout the day. They also establish that positive and negative moods fluctuate independently. Interestingly, they also show that anger and fatigue are unaffected across the year. 
 
 #### Figure Analysis: Figure 1
 For Dzogang et al.  **Figure 1**, they look at the variation of word volume within the 24-hour cycle, with a 99% confidence interval. In order to achieve this, author's averaged the hourly word volume. I then assume they calculated their 99% confidence intervals from student t-test. They have the y-axis representing that average volume per hour in the top 20,000 most frequent words across the 4 years. Although not labeled, the x-axis represents hours, starting at 6 AM in the morning. 
-- This includes inferential statistics (99% confidence intervals)
+
+- This figure includes descriptive and inferential statistics (99% confidence intervals)
 
 ```{r, Fig 1}
 # Start by loading in libraries
@@ -64,9 +70,9 @@ d.Avg <- summarize(.data = d,
                       upper_ci = mean(wordfreq) - qnorm(1 - (alpha/2))* sqrt(var(wordfreq)/length(wordfreq)), # upper 99% CI
                       .by = time)
 
-# Author's plot starts at 6 (AM), current data will have the plot starting at midnight.
-# Mutate the data so that it can start at a similar time frame
-# There's probably a better way to do this but I'm creating the variable "x" so that 6 AM will be first on the chart, followed by 7 AM will be next, until 5 AM is the last point on the graph. It is possible to shift the time using as.POSIXct (see Figure 2) but I cannot get it to work.
+# Author's plot starts at 6 (AM); current data will start at midnight.
+# Mutate the data so that it can start at the same time (ie make 6 AM "01") 
+# There's probably a better way to do this but I'm creating the variable "x" so that 6 AM will be first on the chart, followed by 7 AM, until 5 AM is the last point on the graph. It is possible to shift the time using as.POSIXct (see Figure 2) but I cannot get it to work.
 d.Avg <- d.Avg %>%
  mutate(x = case_when(time =="00:00:00" ~ "19",
                       time =="01:00:00" ~ "20",
@@ -92,7 +98,7 @@ d.Avg <- d.Avg %>%
                       time =="21:00:00" ~ "16",
                       time =="22:00:00" ~ "17",
                       time =="23:00:00" ~ "18"))
-
+d.Avg
                          
 # Let's generate the plot
 fig.1 <- ggplot(d.Avg, aes(x = x, y = AvgFrequency, group = 1)) + # group = 1 needed for geom_line()
@@ -121,11 +127,11 @@ Figure 1 was able to be mostly successfully replicated. The authors did not repo
 Based on this data, the UK population does not Tweet very much between 2 AM - 9 AM. Peak tweeting, as defined characterized by use of 20,000 most frequent words, occurs between 9 - 11 PM.  
 
 #### Figure Analysis: Figure 2
-For Dzogang et al.  **Figure 2**, they are showing that their methods on a group of example words (e.g., "sunrise" or "bus") are over-expressed and under-expressed at the expected times. In this case, "sunrise" and "bus" are overexpressed at 8 AM with some slight overexpression in the afternoon.  To demonstrate this, they use heatmaps that show the relative expression of a word in different months in each row and its relative expression during the 24-hours in each column. In other words, the y-axis is months and the x-axis is 24 hours. The authors now choose to start their x-axis at 0 (i.e., midnight), unlike Figure 1, for unknown reasons. The heatmaps are smoothed using cubic interpolation with secren interpolated points between each sampled value. Contours indicate sunrise and sunset in local time in London, United Kingdom. 
+For Dzogang et al.  **Figure 2**, they are showing that their methods on a group of example words (e.g., "sunrise" or "bus") are over-expressed and under-expressed at the expected times. In this case, "sunrise" and "bus" are overexpressed at 8 AM with some slight overexpression in the afternoon.  To demonstrate this, they use heatmaps that show the relative expression of a word in different months in each row and its relative expression during the 24-hours in each column. In other words, the y-axis is months and the x-axis is 24 hours. The authors now choose to start their x-axis at 0 (i.e., midnight), unlike Figure 1, for unknown reasons. The heatmaps are smoothed using cubic interpolation with seven interpolated points between each sampled value. Contours indicate sunrise and sunset in local time in London, United Kingdom. I was not able to replicate the cubic interpolation or plot the sunrise/sunset times onto the heat map.
 
 This analysis is much more difficult and **can not be completed**.  In all their 9,000 csv files, there is not one called "sunrise" or "bus". Authors also do not describe what software they used or how they actually collected this data, so I am unable to attempt to glean Twitter data for these words. Authors also did not include sunrise/sunset data.  In order to attempt this, I will use one of the files they have included called "sunset". So although it will not be the same as what they have provided, it will be an attempt to mimic what they did. 
 
-I collected the data from [here]("https://www.timeanddate.com/sun/uk/london?month=10&year=2010") that included that date and time of sunset in the UK. This information is uploaded to github. Authors should have included this.  
+I collected the data from [here]("https://www.timeanddate.com/sun/uk/london?month=10&year=2010") that included that date and time of sunset in the UK. This information is uploaded to github. Authors should have included this instead of manually having to extract it 
 
 Figures 3 - 11 are very similar. It is not clear exactly what words were considered for the plots. 
 
@@ -156,7 +162,7 @@ d_sunset.Avg <- aggregate(x=d_sunset$wordfreq,
                           by=list(d_sunset$hour_of_day,d_sunset$month), FUN=mean)
 
 colnames(d_sunset.Avg) <- c("hour", "month", "wordfreq")
-skim(d_sunset.Avg)
+head(d_sunset.Avg)
 
 # Create a matrix with hours of the day as columns (0 - 23) and months (1-12) as rows
 sunset_df <- dcast(d_sunset.Avg, month ~ hour, value.var = "wordfreq")
@@ -170,7 +176,7 @@ g <- "https://raw.githubusercontent.com/kierstenbell/data-analysis-rep/main/data
 d_sunset.times <- read_csv(g, col_names = TRUE)
 head(d_sunset.times)
 
-# Process Data by converting characters to as.posixct so we can average the time 
+# Process data by converting characters to as.posixct so we can average the time 
 d_sunset.times$date_time <- as.POSIXct(paste(d_sunset.times$Date, d_sunset.times$Sunset), format = "%Y-%m-%d %H:%M")
 
 # Extract only the time ; if change to as.numeric throws an error 
@@ -187,25 +193,57 @@ library(chron)
 d_sunset.times.average <- d_sunset.times %>%
   group_by(month) %>%
   reframe(AvgSunSet = mean(chron::times(time)))
+d_sunset.times.average
 
-
+# I cannot figure out how to convert the <time> variable to a <numeric> one 
+# used timediff() as.positx() etc. I will just hardcode the tibble for now... 
+# decimals were determined by dividing the minutes by 60; so 16:22 = 16 + 22/60= 16.37
+month <- 1:12
+AvgSunSet <- c(16.37, 17.22, 18.22, 19.95, 20.77, 21.28, 21.13, 20.31, 19.22, 17.97, 16.18, 15.88)
+AvgSunSetTimes <- data.frame(month, AvgSunSet)
 
 # Perform cubic interpolation
 # Authors state they want "cubic interpolation" with 7 interpolated points, which would be a spline
 # Authors had  interpolated points between each sample value so xout = 7
+# this does not work, nor does ggplot accept this 
+#interpolated_data <- apply(word_freq_matrix[, -1], 1, function(x) {
+#  na.approx(x, xout = 7, rule = 2, method = "cubic", ties="ordered")  # specify the ties argument
+# })
 
-# Sunset times
-
-# Create a heatmap
+# Create a heatmap, adding geom_point() with sunset data did nothing
 heatmap <- ggplot(data = sunset, aes(x = Var2, y = Var1, fill = value)) +
                   geom_tile() +
                   scale_fill_gradientn(colours = c("green", "white", "red")) +
-                  coord_fixed(ratio = 1) +  # Adjust ratio_value to lengthen or shorten the plot
+                  coord_fixed(ratio = 1) +  # Adjust ratio_value to lengthen the plot
                   labs(x = "Hour of Day", y = "Month", fill = "Word Frequency") +
                   scale_y_continuous(breaks = seq(1, 12, by = 1)) +
                   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+heatmap
 
-complete_plot <- heatmap +
-  geom_point(data = d_sunset.times.average, aes(x = AvgSunSet, y = month), color = "black", size = 100)
-      
+# Sunset data
+sunset <- ggplot(data = AvgSunSetTimes, aes(x = AvgSunSet, y = month, group = 1), color = "black", size = 100) +
+          geom_point() +
+         # geom_line() + this connects points based on the x-values, not y values... 
+          xlim(0, 23) + 
+          scale_x_continuous(breaks = seq(0, 23, by = 1)) +
+          scale_y_continuous(breaks = seq(1, 12, by = 1)) 
+
+sunset
+
+## Hypothetically these should be overlaid, but errors are thrown. However, you can see that the pattern in the heatmap reflects the timing of the sunset. Although the authors show "sunrise" and "bus", we see that the same pattern emerges with "sunset"! Note: author's month scale is switched
+
+# Compare generated plot with original figure
+# Grab Fig 2 Url from Github
+# Compare my figure (top) to author's figures (bottom)
+knitr::include_graphics("https://github.com/kierstenbell/data-analysis-rep/blob/main/Figures/Figure%202.jpg?raw=true")
+
 ```
+
+### Reflection
+This assignment was incredibly difficult. Although this paper was a lot easier to handle than the Hughey and Buttes paper, it was still quite the challenge. The authors made *most of their data available, despite making it seem like all of their data was. They should've included data like sunrise/sunset times (which I manually collected), as well as the data sets for "bus" and "sunrise" for which they plotted.  In general, the authors of this paper should have included a lot more information about their specific data sets. I was not able to replicate Figures 3-11 (not shown) as I was not sure what csv files were categorized as which moods. Considering that their data was already in a supplemental file, it is odd to me that they didn't include this information. Additionally, it would've been helpful (for me) if the authors included some descriptive statistics for Figure 1 so that I knew whether or not my replication was correct. 
+
+For the Figures that were not shown, the authors completed analysis that I did not understand. While I am familiar with sine fitting, I struggled to figure out how to interpolate cubic plots with 7 sample points. I would need more training in statistics and circadian mathematics before I would be able to reconstruct those plots properly. 
+
+Lastly, even if I did have the "sunrise"/"bus" data set for Figure 2, I would not able to replicate Figure because I could not figure out how to include the contour lines on top of the heatmap. I received a variety of errors, and I would need to spend additional time to finally be able to include the sunset/sunrise times on the heatmaps of specific words.  
+
+Overall, I have a lot more appreciation for circadian rhythm researchers. The data wrangling and statistical analysis are not easy. 
