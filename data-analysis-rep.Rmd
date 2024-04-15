@@ -30,6 +30,7 @@ Authors first compute the Fourier decompoisition of the 33,576 time point series
 
 #### Figure Analysis: Figure 1
 For Dzogang et al.  **Figure 1**, they look at the variation of word volume within the 24-hour cycle, with a 99% confidence interval. In order to achieve this, author's averaged the hourly word volume. I then assume they calculated their 99% confidence intervals from student t-test. They have the y-axis representing that average volume per hour in the top 20,000 most frequent words across the 4 years. Although not labeled, the x-axis represents hours, starting at 6 AM in the morning. 
+- This includes inferential statistics (99% confidence intervals)
 
 ```{r, Fig 1}
 # Start by loading in libraries
@@ -37,6 +38,10 @@ library(tidyverse)
 library(dplyr)
 library(ggplot2)
 library(skimr)
+library(reshape2)
+library(zoo)
+library(chron)
+
 
 # Grab data
 f <- "https://raw.githubusercontent.com/kierstenbell/data-analysis-rep/main/data/vol.csv"
@@ -55,13 +60,13 @@ alpha = 0.01
 
 d.Avg <- summarize(.data = d, 
                       AvgFrequency = mean(wordfreq),
-                      lower_ci = mean(wordfreq) + qnorm(1 - (alpha/2))* sqrt(var(wordfreq)/length(wordfreq)),
-                      upper_ci = mean(wordfreq) - qnorm(1 - (alpha/2))* sqrt(var(wordfreq)/length(wordfreq)),
+                      lower_ci = mean(wordfreq) + qnorm(1 - (alpha/2))* sqrt(var(wordfreq)/length(wordfreq)), # lower 99% CI
+                      upper_ci = mean(wordfreq) - qnorm(1 - (alpha/2))* sqrt(var(wordfreq)/length(wordfreq)), # upper 99% CI
                       .by = time)
 
 # Author's plot starts at 6 (AM), current data will have the plot starting at midnight.
 # Mutate the data so that it can start at a similar time frame
-# There's probably a better way to do this but I'm creating the variable "x" so that 6 AM will be first on the chart, followed by 7 AM will be next, until 5 AM is the last point on the graph. There is a library {lubridate} that'll shift time, but it would not work for me.
+# There's probably a better way to do this but I'm creating the variable "x" so that 6 AM will be first on the chart, followed by 7 AM will be next, until 5 AM is the last point on the graph. It is possible to shift the time using as.POSIXct (see Figure 2) but I cannot get it to work.
 d.Avg <- d.Avg %>%
  mutate(x = case_when(time =="00:00:00" ~ "19",
                       time =="01:00:00" ~ "20",
@@ -95,7 +100,7 @@ fig.1 <- ggplot(d.Avg, aes(x = x, y = AvgFrequency, group = 1)) + # group = 1 ne
       geom_line() + # Connect the points, **need group = 1 in aes 
       geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.4, fill = "blue") +  # Add shaded area for confidence interval; lower_ci and upper_ci calculated above
       scale_x_discrete(labels = c("6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "0", "1", "2", "3", "4", "5")) + # Manually change the x-axis labels to the correct times
-      scale_y_continuous(limits = c(0.5, 3e+05)) +  # Adjust y-axis limits
+      scale_y_continuous(limits = c(0.5e+05, 3e+05)) +  # Adjust y-axis limits
       labs(x = "Hour", y = "Average Word Frequency") +  # Label the axes
       ggtitle("Figure 1 Replicate")  # Add a title
 
@@ -111,14 +116,96 @@ ggsave(plot_file, plot = fig.1, width = 5, height = 4, dpi = 300)
 knitr::include_graphics(c(plot_file, AuthorsFig1_url))
 ```
 
-Figure 1 was able to be successfully replicated. The authors did not report any physical numbers, so it is unclear whether this is an *exact* match; however, it is graphically very similar.  The data was easy to access (unlike Hughey & Butts 2016 paper!); however, the authors did not provide a lot of detail about how they conducted this particular analysis. I made some assumptions, but it appears as though those assumptions were correct. 
+Figure 1 was able to be mostly successfully replicated. The authors did not report any physical numbers, so it is unclear whether this is an *exact* match; however, it is graphically very similar.  The data was easy to access (unlike Hughey & Butts 2016 paper!); however, the authors did not provide a lot of detail about how they conducted this particular analysis. I made some assumptions, but it appears as though those assumptions were correct. 
 
 Based on this data, the UK population does not Tweet very much between 2 AM - 9 AM. Peak tweeting, as defined characterized by use of 20,000 most frequent words, occurs between 9 - 11 PM.  
 
 #### Figure Analysis: Figure 2
 For Dzogang et al.  **Figure 2**, they are showing that their methods on a group of example words (e.g., "sunrise" or "bus") are over-expressed and under-expressed at the expected times. In this case, "sunrise" and "bus" are overexpressed at 8 AM with some slight overexpression in the afternoon.  To demonstrate this, they use heatmaps that show the relative expression of a word in different months in each row and its relative expression during the 24-hours in each column. In other words, the y-axis is months and the x-axis is 24 hours. The authors now choose to start their x-axis at 0 (i.e., midnight), unlike Figure 1, for unknown reasons. The heatmaps are smoothed using cubic interpolation with secren interpolated points between each sampled value. Contours indicate sunrise and sunset in local time in London, United Kingdom. 
 
+This analysis is much more difficult and **can not be completed**.  In all their 9,000 csv files, there is not one called "sunrise" or "bus". Authors also do not describe what software they used or how they actually collected this data, so I am unable to attempt to glean Twitter data for these words. Authors also did not include sunrise/sunset data.  In order to attempt this, I will use one of the files they have included called "sunset". So although it will not be the same as what they have provided, it will be an attempt to mimic what they did. 
+
+I collected the data from [here]("https://www.timeanddate.com/sun/uk/london?month=10&year=2010") that included that date and time of sunset in the UK. This information is uploaded to github. Authors should have included this.  
+
+Figures 3 - 11 are very similar. It is not clear exactly what words were considered for the plots. 
+
 ```{r, Figure 2}
+# Load data set titled "sunset", where `sunset' was extracted based on the Linguistic Inquiry and Word Count.
+f <- "https://raw.githubusercontent.com/kierstenbell/data-analysis-rep/main/data/sunset.csv"
+d_sunset <- read.csv(f, sep = " ")
+colnames(d_sunset) <- c("date", "time", "wordfreq") #creating column names to make data easier to work with
+
+# Check to make sure data looks ok
+# Note: certain hours are missing - this indicates that the word "sunset" was not tweeted
+head(d_sunset)
+
+# Preprocess the data
+# as.POSIXct converts character class to the POSIXlt class which allows manipulation of date/time
+# This will allow us to easily extract month data
+d_sunset$date_time <- as.POSIXct(paste(d_sunset$date, d_sunset$time), format = "%d-%m-%Y %H:%M:%OS")
+d_sunset$hour_of_day <- as.numeric(format(d_sunset$date_time, "%H"))
+d_sunset$month <- as.numeric(format(d_sunset$date_time, "%m"))
+d_sunset$year <- as.character(format(d_sunset$date_time, "%Y"))
+
+# if we skim this data set, we will see that we have different classes
+skim(d_sunset)
+
+# Average the data across the 4 years
+# Since we are averaging across the years, but needed to keep month and hour, use aggregate() instead of groupby()
+d_sunset.Avg <- aggregate(x=d_sunset$wordfreq, 
+                          by=list(d_sunset$hour_of_day,d_sunset$month), FUN=mean)
+
+colnames(d_sunset.Avg) <- c("hour", "month", "wordfreq")
+skim(d_sunset.Avg)
+
+# Create a matrix with hours of the day as columns (0 - 23) and months (1-12) as rows
+sunset_df <- dcast(d_sunset.Avg, month ~ hour, value.var = "wordfreq")
+sunset_matrix <- as.matrix(sunset_df) # matrix needed for heatmap in ggplot
+sunset <- melt(sunset_matrix) # needed for heatmap in ggplot
+head(sunset) # checking to make sure there are correct values
+
+# Created my own csv sheet with sunset times in London, UK from 01-01-2010 - 31-10-2014
+# Load data set titled "SunsetTimes"
+g <- "https://raw.githubusercontent.com/kierstenbell/data-analysis-rep/main/data/SunsetTimes.csv"
+d_sunset.times <- read_csv(g, col_names = TRUE)
+head(d_sunset.times)
+
+# Process Data by converting characters to as.posixct so we can average the time 
+d_sunset.times$date_time <- as.POSIXct(paste(d_sunset.times$Date, d_sunset.times$Sunset), format = "%Y-%m-%d %H:%M")
+
+# Extract only the time ; if change to as.numeric throws an error 
+d_sunset.times$time <- format(d_sunset.times$date_time, format="%H:%M:%S")
+
+# Extract month
+d_sunset.times$month <- as.character(format(d_sunset.times$date_time, "%m"))
+
+# Extract year
+d_sunset.times$year <- as.character(format(d_sunset.times$date_time, "%Y"))
+
+# Get average sunset time 
+library(chron)
+d_sunset.times.average <- d_sunset.times %>%
+  group_by(month) %>%
+  reframe(AvgSunSet = mean(chron::times(time)))
 
 
+
+# Perform cubic interpolation
+# Authors state they want "cubic interpolation" with 7 interpolated points, which would be a spline
+# Authors had  interpolated points between each sample value so xout = 7
+
+# Sunset times
+
+# Create a heatmap
+heatmap <- ggplot(data = sunset, aes(x = Var2, y = Var1, fill = value)) +
+                  geom_tile() +
+                  scale_fill_gradientn(colours = c("green", "white", "red")) +
+                  coord_fixed(ratio = 1) +  # Adjust ratio_value to lengthen or shorten the plot
+                  labs(x = "Hour of Day", y = "Month", fill = "Word Frequency") +
+                  scale_y_continuous(breaks = seq(1, 12, by = 1)) +
+                  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+complete_plot <- heatmap +
+  geom_point(data = d_sunset.times.average, aes(x = AvgSunSet, y = month), color = "black", size = 100)
+      
 ```
